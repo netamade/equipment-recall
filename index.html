@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<base target="_top">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif; background: #F4F6F9; color: #222; }
+  header { background: #1F3864; color: #fff; padding: 22px 20px 16px; }
+  header h1 { margin: 0 0 6px; font-size: 22px; }
+  header p { margin: 0; font-size: 13px; opacity: .85; }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 16px; }
+  .controls { background: #fff; border-radius: 10px; padding: 14px 16px; box-shadow: 0 1px 3px rgba(0,0,0,.08); margin-bottom: 14px; }
+  .controls .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
+  .controls .row:last-child { margin-bottom: 0; }
+  .chip { border: 1px solid #B4C2D6; background: #fff; color: #1F3864; border-radius: 999px; padding: 5px 12px; font-size: 13px; cursor: pointer; }
+  .chip.on { background: #1F3864; color: #fff; }
+  .sev { font-size: 13px; }
+  .sev label { margin-right: 10px; cursor: pointer; }
+  input[type="search"] { flex: 1; min-width: 200px; padding: 8px 10px; border: 1px solid #B4C2D6; border-radius: 6px; font-size: 14px; }
+  .count { font-size: 13px; color: #555; margin: 4px 2px 12px; }
+  .card { background: #fff; border-radius: 10px; padding: 16px 18px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.08); border-left: 6px solid #808080; }
+  .card.sev-high { border-left-color: #C00000; }
+  .card.sev-mid { border-left-color: #ED7D31; }
+  .card.sev-low { border-left-color: #808080; }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .badge { font-size: 12px; font-weight: bold; color: #fff; border-radius: 4px; padding: 2px 8px; }
+  .badge.high { background: #C00000; } .badge.mid { background: #ED7D31; } .badge.low { background: #808080; }
+  .cat { font-size: 12px; background: #EAF0F7; color: #1F3864; border-radius: 4px; padding: 2px 8px; }
+  .date { font-size: 13px; color: #666; }
+  .maker { font-size: 17px; font-weight: bold; margin: 2px 0 4px; }
+  .model { font-size: 13.5px; color: #333; margin-bottom: 8px; }
+  .label { font-size: 12px; font-weight: bold; color: #1F3864; margin-top: 8px; }
+  .text { font-size: 13.5px; line-height: 1.65; }
+  .src { margin-top: 10px; font-size: 13px; }
+  .src a { color: #1F5FBF; }
+  footer { max-width: 960px; margin: 8px auto 30px; padding: 0 16px; font-size: 12px; color: #666; line-height: 1.7; }
+  .empty { text-align: center; color: #888; padding: 30px 0; font-size: 14px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>設備リコール・安全情報まとめ</h1>
+  <p>マンション共用設備に関するメーカー・公的機関の公表情報を集約しています（最終更新：2026年10月30日）</p>
+</header>
+<div class="wrap">
+  <div class="controls">
+    <div class="row" id="cats"></div>
+    <div class="row">
+      <span class="sev">
+        <label><input type="checkbox" class="sevbox" value="高" checked> 重要度：高</label>
+        <label><input type="checkbox" class="sevbox" value="中" checked> 中</label>
+        <label><input type="checkbox" class="sevbox" value="低" checked> 低</label>
+      </span>
+      <input type="search" id="q" placeholder="メーカー・型式・キーワードで検索">
+    </div>
+  </div>
+  <div class="count" id="count"></div>
+  <div id="list"></div>
+  <div class="empty" id="empty" style="display:none">条件に合う情報がありません。</div>
+</div>
+<footer>
+  <p>※ 本サイトは、国土交通省・経済産業省・各メーカー等が公表した情報を集約したものです。個別の設備が対象に該当するかどうかは、必ず出典（メーカー・公的機関の原文）で確認してください。</p>
+  <p>※ 収録範囲：2024年5月〜2026年9月に公表された、マンション共用設備に関連する主な公表情報です。網羅を保証するものではありません。機械式駐車場の屋根の大臣認定不適合については、国土交通省が2026年2月24日に計11社の公表を行っており、本サイトでは一次情報を確認できた1社分を収録しています。</p>
+  <p>※ 重要度の目安：高＝人身事故の可能性・使用停止・大臣認定不適合・安全関連リコール／中＝無償修理・部品交換・機能に影響する不具合／低＝部品供給停止・仕様変更などのお知らせ。</p>
+</footer>
+<script>
+  var ITEMS = [{"date": "2026-09-24", "category": "太陽光発電・蓄電池", "maker": "ニチコン株式会社", "model": "トライブリッド蓄電システム（蓄電池容量13.2kWh）ESS-T5FS、ESS-T5FSVPL、ESS-T6FS、ESS-T6FSVPL（蓄電池ユニット：ES-BFFS）", "phenomenon": "2025年1月から2026年7月までに出荷した蓄電システムの一部において、搭載している蓄電池の製造工程に問題があり、蓄電池からごく稀に発煙し、電解液を噴出する可能性があることが判明した。対象は3,706台（販売期間2024年12月〜2026年8月）。", "action": "蓄電池の一時的な運転停止および蓄電池の無償交換", "severity": "高", "url": "https://www.nichicon.co.jp/important/tribridt5t6_battery/"}, {"date": "2026-05-20", "category": "給湯設備", "maker": "株式会社コロナ", "model": "家庭用ヒートポンプ給湯機（エコキュート）コロナ：CHP-4510A他 計30機種、ユーリッチ：CFH-4510A他 計19機種、トヨタホーム：CHP-T4510A-5、CHP-T4510A-53（ヒートポンプユニット製造元：株式会社デンソー）", "phenomenon": "一部機種に使用されているヒートポンプユニットにおいて、まれにユニット内の圧縮機が塩分などによる腐食により破損し、運転中にユニット本体が変形に至る可能性がある。けがにつながるおそれもあるとされる。点検対象は2010年4月〜2017年4月製造の240,629台。", "action": "無料点検・修理", "severity": "高", "url": "https://www.meti.go.jp/product_safety/recall/file/260520-2.html"}, {"date": "2026-02-24", "category": "機械式駐車場", "maker": "三菱重工機械システム株式会社", "model": "自動車車庫（機械式立体駐車場）の屋根（耐火構造）", "phenomenon": "過去に販売した自動車車庫（機械式立体駐車場）の屋根（耐火構造）の仕様が、国土交通大臣認定に適合しない仕様となっていた。タイトフレームの板厚不足（必要3.2mm以上に対し2.3mm）、折板屋根の緊結ピッチ超過、ビス固定、耐火被覆の一部未施工が確認された。対象は16棟。なお国土交通省は同日、他社を含む11社が供給した機械式立体駐車場の屋根について同様の大臣認定仕様への不適合を公表している。", "action": "対象物件の顧客へ個別に連絡し、建築基準法で求められる性能確認を行い、その結果に基づき必要な是正措置を実施", "severity": "高", "url": "https://www.mhi.com/jp/group/mhims/news/topics/260224.html"}, {"date": "2025-12-22", "category": "エレベーター・エスカレーター", "maker": "株式会社日立ビルシステム", "model": "エレベーター 制御リニューアル機種 B86制御モデル［VF-CM］、B95制御モデル［VF-CM2］（生産期間1986年〜2003年）", "phenomenon": "巻上機・電動機、プリント板等の保守部品について、2027年12月をめどに供給を停止する旨のお知らせ。供給停止部品が故障・破損した場合、復旧できない場合があり、故障発生以降はエレベーターを使用しないよう求めている。", "action": "部品供給停止のお知らせ（リニューアルの検討を推奨）", "severity": "低", "url": "https://www.hbs.co.jp/support/end-of-supply/elevator_escalator/pdf/parts_info_202512.pdf"}, {"date": "2025-10-01", "category": "消防設備", "maker": "パナソニック株式会社", "model": "自動火災報知設備 P型1級受信機／G型受信機（アドバンス・フレキシブルシリーズ、防排煙連動操作盤を含む。2016年1月〜2020年11月製造）", "phenomenon": "製造工程における基板への一部部品の実装時の不備により、液晶画面の異常表示、LEDの点灯やトラブル音などの不具合が発生する可能性がある。不具合発生時においても火災監視機能は継続しているが、電源を切って再起動させると、正常に起動しない場合がある。", "action": "無償修理（製品内部の基板交換）", "severity": "高", "url": "https://panasonic.co.jp/ew/oshirase/pdf/pg20251001.pdf"}, {"date": "2025-10-01", "category": "消防設備", "maker": "日本ドライケミカル株式会社", "model": "P型1級受信機 NBP150／NBP151／NBP152／NBP153シリーズ、G型受信機 NBG605シリーズ、GP型1級受信機 NBC917／NBC918／NBC919／NBC920シリーズ、連動操作盤 NLD916シリーズ", "phenomenon": "製造上の不具合により、液晶画面（LCD）にトラブル表示が出力され、トラブル音が鳴動する。電源を入れ直した際に「基板登録モード」で起動し、通常の監視状態に入らない場合がある。", "action": "無償での回収（基板交換）", "severity": "高", "url": "https://www.ndc-group.co.jp/images/pdf/info_20251001.pdf"}, {"date": "2025-10-01", "category": "消防設備", "maker": "パナソニック エンターテインメント＆コミュニケーション株式会社", "model": "ラック形非常用放送設備（放送設備の増幅器及び操作部、認評放第26～15号。2014年7月〜2025年6月製造）", "phenomenon": "ソフトウェアの不具合により、停電の状況で、発報放送開始直後（1.7秒以内）の特定のタイミングで火災放送スイッチを押下すると、火災放送が再生されない場合がある。", "action": "無償でソフトウェアのバージョンアップ", "severity": "中", "url": "https://www.panasonic.com/jp/peac/product_information/notice/c/2510.html"}, {"date": "2025-04-21", "category": "消防設備", "maker": "ヤンマーエネルギーシステム株式会社", "model": "防災用ディーゼル発電装置 AP155D、AP155D1、AP230D、AP280D、AP300C、AP385E、AP450E、AP500E、AY20L-500L/H、AY20L-625L/H 等（2021年8月〜2025年4月製造の一部、全1,905台）", "phenomenon": "冬季に制御盤の電気回路が切り替わらず機関入口燃料電磁弁が開かない事象が発生した。同時期に製造された装置でも同様の事象が発生する可能性があり、万が一の停電時に防災用である発電装置が機能しないおそれがある。", "action": "無償修理（暫定処置として機関入口燃料電磁弁を手動操作にて「常時開」に設定。恒久処置は準備が整い次第改めて連絡）", "severity": "高", "url": "https://www.yanmar.com/jp/energy/important/2025/04/21/150818.html"}, {"date": "2025-04-15", "category": "給湯設備", "maker": "リンナイ株式会社", "model": "温水式浴室暖房乾燥機 RBH-C261シリーズ、RBH-C333シリーズ、RBHM-C334シリーズ（2003年8月〜2020年8月製造、372,398台）", "phenomenon": "製造から10年以上経過した浴室暖房乾燥機において、温風を浴室内に循環させるファンモーター内部のリード線引き出し部が経年的に腐食することで短絡が起き、発火によって製品の焼損に至るおそれがある。", "action": "換気運転以外の使用中止のお願い、ならびに無償点検・修理（発火防止の制御基板の取付）", "severity": "高", "url": "https://www.rinnai.co.jp/safety/safety/2025/0415/"}, {"date": "2025-01-20", "category": "業務用エアコン", "maker": "ダイキン工業株式会社", "model": "ルームエアコン 2023年・2024年モデル FNシリーズ 室内機（2023年3月〜2024年12月製造）", "phenomenon": "冷房・除湿運転時にドレンホースの詰まりにより水漏れが発生する可能性が判明した。なお、2025年11月には2025年モデルFNシリーズについても同様の事象が発生する可能性があるとして対象に追加された。", "action": "無償点検修理", "severity": "中", "url": "https://www.daikin.co.jp/taisetsu/2025/250120-TEXT"}, {"date": "2024-10-31", "category": "給湯設備", "maker": "株式会社パロマ", "model": "ガスバーナー付ふろがま（屋外式 給湯部有）、ガス瞬間湯沸器（屋外式 先止め式）、ガス温水熱源機（屋外式 給湯・暖房）", "phenomenon": "加工する設備の保守不備により、ガス管接続用の部品寸法にばらつきが発生し、気密漏れに至る可能性があるため。", "action": "点検・部品交換", "severity": "高", "url": "https://www.meti.go.jp/product_safety/recall/file/241031-1.html"}, {"date": "2024-09-26", "category": "太陽光発電・蓄電池", "maker": "富士電機株式会社", "model": "パワーコンディショナ（太陽光発電システム用）エコノライン550 PVN-550（販売者：京セラ株式会社。2001年4月〜2005年4月販売、4,944台）", "phenomenon": "当該製品の部品が経年劣化により発火する可能性があるため。", "action": "回収", "severity": "高", "url": "https://www.meti.go.jp/product_safety/recall/file/240926-1.html"}, {"date": "2024-05-31", "category": "給湯設備", "maker": "株式会社パロマ", "model": "密閉式ガス瞬間湯沸かし器（FF式、LPガス用）PH-16SXTU、PH-20SXTU（2022年9月29日〜2024年5月9日販売、1,368台）", "phenomenon": "燃焼の不具合により、屋外に排気される一酸化炭素濃度が基準値を超える可能性があるため。", "action": "点検・部品交換", "severity": "高", "url": "https://www.meti.go.jp/product_safety/recall/file/240531-1.html"}];
+  var cat = 'すべて';
+  var cats = ['すべて'];
+  ITEMS.forEach(function (it) { if (cats.indexOf(it.category) < 0) cats.push(it.category); });
+  var catBox = document.getElementById('cats');
+  cats.forEach(function (c) {
+    var b = document.createElement('button');
+    b.className = 'chip' + (c === 'すべて' ? ' on' : '');
+    b.textContent = c;
+    b.onclick = function () {
+      cat = c;
+      catBox.querySelectorAll('.chip').forEach(function (x) { x.classList.toggle('on', x.textContent === c); });
+      render();
+    };
+    catBox.appendChild(b);
+  });
+  document.querySelectorAll('.sevbox').forEach(function (b) { b.onchange = render; });
+  document.getElementById('q').oninput = render;
+  function sevClass(s) { return s === '高' ? 'high' : (s === '中' ? 'mid' : 'low'); }
+  function esc(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+  function render() {
+    var sevs = Array.prototype.map.call(document.querySelectorAll('.sevbox:checked'), function (b) { return b.value; });
+    var q = document.getElementById('q').value.trim();
+    var shown = ITEMS.filter(function (it) {
+      if (cat !== 'すべて' && it.category !== cat) return false;
+      if (sevs.indexOf(it.severity) < 0) return false;
+      if (q && (it.maker + it.model + it.phenomenon + it.action + it.category).indexOf(q) < 0) return false;
+      return true;
+    });
+    document.getElementById('count').textContent = shown.length + ' 件を表示（全 ' + ITEMS.length + ' 件）';
+    document.getElementById('empty').style.display = shown.length ? 'none' : 'block';
+    document.getElementById('list').innerHTML = shown.map(function (it) {
+      var sc = sevClass(it.severity);
+      return '<div class="card sev-' + sc + '">' +
+        '<div class="meta"><span class="badge ' + sc + '">重要度：' + esc(it.severity) + '</span>' +
+        '<span class="cat">' + esc(it.category) + '</span>' +
+        '<span class="date">' + esc(it.date) + ' 公表</span></div>' +
+        '<div class="maker">' + esc(it.maker) + '</div>' +
+        '<div class="model">' + esc(it.model) + '</div>' +
+        '<div class="label">現象・不具合</div><div class="text">' + esc(it.phenomenon) + '</div>' +
+        '<div class="label">メーカー・公的機関の対応</div><div class="text">' + esc(it.action) + '</div>' +
+        '<div class="src">出典：<a href="' + esc(it.url) + '" target="_blank" rel="noopener">' + esc(it.url) + '</a></div>' +
+        '</div>';
+    }).join('');
+  }
+  render();
+</script>
+</body>
+</html>
